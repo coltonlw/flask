@@ -940,11 +940,13 @@ class Flask(_PackageBoundObject):
         """
         first_registration = False
         if blueprint.name in self.blueprints:
-            assert self.blueprints[blueprint.name] is blueprint, \
-                'A blueprint\'s name collision occurred between %r and ' \
-                '%r.  Both share the same name "%s".  Blueprints that ' \
-                'are created on the fly need unique names.' % \
-                (blueprint, self.blueprints[blueprint.name], blueprint.name)
+            if self.blueprints[blueprint.name] is not blueprint:
+                raise AssertionError(
+                    'A blueprint\'s name collision occurred between %r and ' \
+                    '%r.  Both share the same name "%s".  Blueprints that ' \
+                    'are created on the fly need unique names.' % \
+                    (blueprint, self.blueprints[blueprint.name], blueprint.name)
+                )
         else:
             self.blueprints[blueprint.name] = blueprint
             self._blueprint_order.append(blueprint)
@@ -1106,7 +1108,10 @@ class Flask(_PackageBoundObject):
         else:
             exc_class = exc_class_or_code
 
-        assert issubclass(exc_class, Exception)
+        if not issubclass(exc_class, Exception):
+            raise AssertionError(
+                "%s is not subclass of Exception" % (exc_class.__name__)
+                )
 
         if issubclass(exc_class, HTTPException):
             return exc_class, exc_class.code
@@ -1512,7 +1517,8 @@ class Flask(_PackageBoundObject):
         .. versionadded:: 0.7
         """
         exc_type, exc_value, tb = sys.exc_info()
-        assert exc_value is e
+        if exc_value is not e:
+            raise AssertionError("%s is not %s" % (exc_value, e))
 
         # ensure not to trash sys.exc_info() at that point in case someone
         # wants the traceback preserved in handle_http_exception.  Of course

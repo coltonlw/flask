@@ -189,8 +189,10 @@ class AppContext(object):
                 self.app.do_teardown_appcontext(exc)
         finally:
             rv = _app_ctx_stack.pop()
-        assert rv is self, 'Popped wrong app context.  (%r instead of %r)' \
-            % (rv, self)
+        if rv is not self:
+            raise AssertionError(
+                'Popped wrong app context.  (%r instead of %r)' % (rv, self)
+                )
         appcontext_popped.send(self.app)
 
     def __enter__(self):
@@ -374,9 +376,11 @@ class RequestContext(object):
             # Get rid of the app as well if necessary.
             if app_ctx is not None:
                 app_ctx.pop(exc)
-
-            assert rv is self, 'Popped wrong request context.  ' \
-                '(%r instead of %r)' % (rv, self)
+            if rv is not self:
+                raise AssertionError(
+                    'Popped wrong request context.  ' \
+                    '(%r instead of %r)' % (rv, self)
+                    )
 
     def auto_pop(self, exc):
         if self.request.environ.get('flask._preserve_context') or \
